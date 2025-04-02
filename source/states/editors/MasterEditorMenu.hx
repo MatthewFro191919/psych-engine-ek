@@ -12,12 +12,11 @@ class MasterEditorMenu extends MusicBeatState
 	var options:Array<String> = [
 		'Chart Editor',
 		'Character Editor',
-		'Stage Editor',
 		'Week Editor',
 		'Menu Character Editor',
 		'Dialogue Editor',
 		'Dialogue Portrait Editor',
-		'Note Splash Editor'
+		'Note Splash Debug'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
 	private var directories:Array<String> = [null];
@@ -60,6 +59,10 @@ class MasterEditorMenu extends MusicBeatState
 		directoryTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER);
 		directoryTxt.scrollFactor.set();
 		add(directoryTxt);
+
+		#if android
+		addVirtualPad(FULL, A_B);
+		#end
 		
 		for (folder in Mods.getModDirectories())
 		{
@@ -78,39 +81,37 @@ class MasterEditorMenu extends MusicBeatState
 
 	override function update(elapsed:Float)
 	{
-		if (controls.UI_UP_P)
+		if (controls.UI_UP_P #if mobile || _virtualpad.buttonUp.justPressed #end)
 		{
 			changeSelection(-1);
 		}
-		if (controls.UI_DOWN_P)
+		if (controls.UI_DOWN_P #if mobile || _virtualpad.buttonDown.justPressed #end)
 		{
 			changeSelection(1);
 		}
 		#if MODS_ALLOWED
-		if(controls.UI_LEFT_P)
+		if(controls.UI_LEFT_P #if mobile || _virtualpad.buttonLeft.justPressed #end)
 		{
 			changeDirectory(-1);
 		}
-		if(controls.UI_RIGHT_P)
+		if(controls.UI_RIGHT_P #if mobile || _virtualpad.buttonRight.justPressed #end)
 		{
 			changeDirectory(1);
 		}
 		#end
 
-		if (controls.BACK)
+		if (controls.BACK #if mobile || _virtualpad.buttonB.justPressed #end)
 		{
 			MusicBeatState.switchState(new MainMenuState());
 		}
 
-		if (controls.ACCEPT)
+		if (controls.ACCEPT #if mobile || _virtualpad.buttonA.justPressed #end)
 		{
 			switch(options[curSelected]) {
 				case 'Chart Editor'://felt it would be cool maybe
 					LoadingState.loadAndSwitchState(new ChartingState(), false);
 				case 'Character Editor':
 					LoadingState.loadAndSwitchState(new CharacterEditorState(Character.DEFAULT_CHARACTER, false));
-				case 'Stage Editor':
-					LoadingState.loadAndSwitchState(new StageEditorState());
 				case 'Week Editor':
 					MusicBeatState.switchState(new WeekEditorState());
 				case 'Menu Character Editor':
@@ -119,19 +120,27 @@ class MasterEditorMenu extends MusicBeatState
 					LoadingState.loadAndSwitchState(new DialogueEditorState(), false);
 				case 'Dialogue Portrait Editor':
 					LoadingState.loadAndSwitchState(new DialogueCharacterEditorState(), false);
-				case 'Note Splash Editor':
-					MusicBeatState.switchState(new NoteSplashEditorState());
+				case 'Note Splash Debug':
+					MusicBeatState.switchState(new NoteSplashDebugState());
 			}
 			FlxG.sound.music.volume = 0;
 			FreeplayState.destroyFreeplayVocals();
 		}
 		
-		for (num => item in grpTexts.members)
+		var bullShit:Int = 0;
+		for (item in grpTexts.members)
 		{
-			item.targetY = num - curSelected;
+			item.targetY = bullShit - curSelected;
+			bullShit++;
+
 			item.alpha = 0.6;
+			// item.setGraphicSize(Std.int(item.width * 0.8));
+
 			if (item.targetY == 0)
+			{
 				item.alpha = 1;
+				// item.setGraphicSize(Std.int(item.width));
+			}
 		}
 		super.update(elapsed);
 	}
@@ -139,7 +148,13 @@ class MasterEditorMenu extends MusicBeatState
 	function changeSelection(change:Int = 0)
 	{
 		FlxG.sound.play(Paths.sound('scrollMenu'), 0.4);
-		curSelected = FlxMath.wrap(curSelected + change, 0, options.length - 1);
+
+		curSelected += change;
+
+		if (curSelected < 0)
+			curSelected = options.length - 1;
+		if (curSelected >= options.length)
+			curSelected = 0;
 	}
 
 	#if MODS_ALLOWED
