@@ -1334,7 +1334,6 @@ class PlayState extends MusicBeatState
 
 
 	var debugNum:Int = 0;
-	private var noteTypes:Array<String> = [];
 	private var eventsPushed:Array<String> = [];
 	private function generateSong(dataPath:String):Void
 	{
