@@ -5,6 +5,7 @@ import backend.Highscore;
 
 import flixel.FlxSubState;
 import objects.HealthIcon;
+import flixel.addons.transition.FlxTransitionableState;
 
 class ResetScoreSubState extends MusicBeatSubstate
 {
@@ -40,7 +41,7 @@ class ResetScoreSubState extends MusicBeatSubstate
 		add(bg);
 
 		var tooLong:Float = (name.length > 18) ? 0.8 : 1; //Fucking Winter Horrorland
-		var text:Alphabet = new Alphabet(0, 180, Language.getPhrase('reset_score', 'Reset the score of'), true);
+		var text:Alphabet = new Alphabet(0, 180, "Reset the score of", true);
 		text.screenCenter(X);
 		alphabetArray.push(text);
 		text.alpha = 0;
@@ -61,16 +62,17 @@ class ResetScoreSubState extends MusicBeatSubstate
 			add(icon);
 		}
 
-		yesText = new Alphabet(0, text.y + 150, Language.getPhrase('Yes'), true);
+		yesText = new Alphabet(0, text.y + 150, 'Yes', true);
 		yesText.screenCenter(X);
 		yesText.x -= 200;
 		add(yesText);
-		noText = new Alphabet(0, text.y + 150, Language.getPhrase('No'), true);
+		noText = new Alphabet(0, text.y + 150, 'No', true);
 		noText.screenCenter(X);
 		noText.x += 200;
 		add(noText);
-		
-		for(letter in yesText.letters) letter.color = FlxColor.RED;
+
+		addVirtualPad(LEFT_RIGHT, A_B);
+
 		updateOptions();
 	}
 
@@ -85,15 +87,20 @@ class ResetScoreSubState extends MusicBeatSubstate
 		}
 		if(week == -1) icon.alpha += elapsed * 2.5;
 
-		if(controls.UI_LEFT_P || controls.UI_RIGHT_P) {
+		if(controls.UI_LEFT_P || controls.UI_RIGHT_P  #if mobile || _virtualpad.buttonLeft.justPressed || _virtualpad.buttonRight.justPressed #end) {
 			FlxG.sound.play(Paths.sound('scrollMenu'), 1);
 			onYes = !onYes;
 			updateOptions();
 		}
-		if(controls.BACK) {
+		if(controls.BACK #if mobile || _virtualpad.buttonB.justPressed #end) {
 			FlxG.sound.play(Paths.sound('cancelMenu'), 1);
+			ClientPrefs.saveSettings();
+			#if mobile
+			closeSs();
+			#else
 			close();
-		} else if(controls.ACCEPT) {
+			#end
+		} else if(controls.ACCEPT #if mobile || _virtualpad.buttonA.justPressed #end) {
 			if(onYes) {
 				if(week == -1) {
 					Highscore.resetSong(song, difficulty);
@@ -102,7 +109,11 @@ class ResetScoreSubState extends MusicBeatSubstate
 				}
 			}
 			FlxG.sound.play(Paths.sound('cancelMenu'), 1);
+            #if mobile
+			closeSs();
+            #else
 			close();
+            #end
 		}
 		super.update(elapsed);
 	}
@@ -117,5 +128,14 @@ class ResetScoreSubState extends MusicBeatSubstate
 		noText.alpha = alphas[1 - confirmInt];
 		noText.scale.set(scales[1 - confirmInt], scales[1 - confirmInt]);
 		if(week == -1) icon.animation.curAnim.curFrame = confirmInt;
+	}
+	override function destroy(){
+		bg = FlxDestroyUtil.destroy(bg);
+		alphabetArray = FlxDestroyUtil.destroyArray(alphabetArray);
+		icon = FlxDestroyUtil.destroy(icon);
+                yesText = FlxDestroyUtil.destroy(yesText);
+		noText = FlxDestroyUtil.destroy(noText);
+
+		super.destroy();
 	}
 }
