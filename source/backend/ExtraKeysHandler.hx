@@ -29,6 +29,7 @@ class ExtraKeysData {
     public var keys:Array<EKManiaMode>;
 
     // these are only used to set the colors into your save data!
+    public var hitboxColors:Array<Array<String>>;
     public var colors:Array<EKNoteColor>;
     public var pixelNoteColors:Array<EKNoteColor>;
 

@@ -1,6 +1,7 @@
 package backend;
 
 import flixel.FlxSubState;
+import flixel.addons.transition.FlxTransitionableState;
 
 class MusicBeatSubstate extends FlxSubState
 {
@@ -21,6 +22,45 @@ class MusicBeatSubstate extends FlxSubState
 	private var curDecStep:Float = 0;
 	private var curDecBeat:Float = 0;
 	private var controls(get, never):Controls;
+
+	#if android
+	var _hitbox:FlxHitbox;
+	var _virtualpad:FlxVirtualPad;
+
+	public function addHitbox(?keyCount:Int = 3) {
+		_hitbox = new FlxHitbox(keyCount);
+
+		var camMobile = new FlxCamera();
+	    camMobile.bgColor.alpha = 0;
+		FlxG.cameras.add(camMobile, false);
+
+		_hitbox.cameras = [camMobile];
+ 		add(_hitbox);
+	}
+
+	public function addVirtualPad(?dpad:FlxDPadMode, ?action:FlxActionMode) {
+		_virtualpad = new FlxVirtualPad(dpad, action);
+		_virtualpad.alpha = ClientPrefs.data.controlsAlpha;
+		add(_virtualpad);
+	}
+
+	public function removeVirtualPad() {
+		remove(_virtualpad);
+	}
+
+	public function addVPadCam() {
+		var camMobile = new FlxCamera();
+		camMobile.bgColor.alpha = 0;
+		FlxG.cameras.add(camMobile, false);
+		
+		_virtualpad.cameras = [camMobile];
+	}
+    
+	public function closeSs() {
+		FlxTransitionableState.skipNextTransOut = true;
+		FlxG.resetState();
+	}
+	#end
 
 	inline function get_controls():Controls
 		return Controls.instance;

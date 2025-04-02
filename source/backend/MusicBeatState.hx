@@ -1,9 +1,11 @@
 package backend;
 
+import flixel.addons.ui.FlxUIState;
+import flixel.addons.transition.FlxTransitionableState;
 import flixel.FlxState;
 import backend.PsychCamera;
 
-class MusicBeatState extends FlxState
+class MusicBeatState extends FlxUIState
 {
 	private var curSection:Int = 0;
 	private var stepsToDo:Int = 0;
@@ -14,16 +16,47 @@ class MusicBeatState extends FlxState
 	private var curDecStep:Float = 0;
 	private var curDecBeat:Float = 0;
 	public var controls(get, never):Controls;
+
+	#if android
+	var _hitbox:FlxHitbox;
+	var _virtualpad:FlxVirtualPad;
+
+	public function addHitbox(?keyCount:Int = 3) {
+		_hitbox = new FlxHitbox(keyCount);
+
+		var camMobile = new FlxCamera();
+	    camMobile.bgColor.alpha = 0;
+		FlxG.cameras.add(camMobile, false);
+
+		_hitbox.cameras = [camMobile];
+ 		add(_hitbox);
+	}
+
+	public function addVirtualPad(?dpad:FlxDPadMode, ?action:FlxActionMode) {
+		_virtualpad = new FlxVirtualPad(dpad, action);
+		_virtualpad.alpha = ClientPrefs.data.controlsAlpha;
+		add(_virtualpad);
+	}
+
+	public function removeVirtualPad() {
+		remove(_virtualpad);
+	}
+
+	public function addVPadCam() {
+		var camMobile = new FlxCamera();
+		camMobile.bgColor.alpha = 0;
+		FlxG.cameras.add(camMobile, false);
+
+		_virtualpad.cameras = [camMobile];
+	}
+	#end
+
 	private function get_controls()
 	{
 		return Controls.instance;
 	}
 
 	var _psychCameraInitialized:Bool = false;
-
-	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
-	public static function getVariables()
-		return getState().variables;
 
 	override function create() {
 		var skip:Bool = FlxTransitionableState.skipNextTransOut;
@@ -34,7 +67,7 @@ class MusicBeatState extends FlxState
 		super.create();
 
 		if(!skip) {
-			openSubState(new CustomFadeTransition(0.5, true));
+			openSubState(new CustomFadeTransition(0.6, true));
 		}
 		FlxTransitionableState.skipNextTransOut = false;
 		timePassedOnState = 0;
@@ -156,7 +189,7 @@ class MusicBeatState extends FlxState
 		if(nextState == null)
 			nextState = FlxG.state;
 
-		FlxG.state.openSubState(new CustomFadeTransition(0.5, false));
+		FlxG.state.openSubState(new CustomFadeTransition(0.6, false));
 		if(nextState == FlxG.state)
 			CustomFadeTransition.finishCallback = function() FlxG.resetState();
 		else

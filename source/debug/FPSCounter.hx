@@ -1,9 +1,11 @@
 package debug;
 
+import states.MainMenuState;
 import flixel.FlxG;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
 import openfl.system.System;
+import lime.system.System as LimeSystem;
 
 /**
 	The FPS class provides an easy-to-use monitor to display
@@ -22,10 +24,15 @@ class FPSCounter extends TextField
 	public var memoryMegas(get, never):Float;
 
 	@:noCompletion private var times:Array<Float>;
+	public var os:String = ''; 
 
 	public function new(x:Float = 10, y:Float = 10, color:Int = 0x000000)
 	{
 		super();
+		if(LimeSystem.platformName == LimeSystem.platformVersion || LimeSystem.platformVersion == null)
+			os = '\nOS: ${LimeSystem.platformName}';
+		else
+			os = '\nOS: ${LimeSystem.platformName} - ${LimeSystem.platformVersion}';
 
 		this.x = x;
 		this.y = y;
@@ -46,23 +53,26 @@ class FPSCounter extends TextField
 	// Event Handlers
 	private override function __enterFrame(deltaTime:Float):Void
 	{
-		final now:Float = haxe.Timer.stamp() * 1000;
-		times.push(now);
-		while (times[0] < now - 1000) times.shift();
-		// prevents the overlay from updating every frame, why would you need to anyways @crowplexus
-		if (deltaTimeout < 50) {
-			deltaTimeout += deltaTime;
+		// prevents the overlay from updating every frame, why would you need to anyways
+		if (deltaTimeout > 1000) {
+			deltaTimeout = 0.0;
 			return;
 		}
 
+		final now:Float = haxe.Timer.stamp() * 1000;
+		times.push(now);
+		while (times[0] < now - 1000) times.shift();
+
 		currentFPS = times.length < FlxG.updateFramerate ? times.length : FlxG.updateFramerate;		
 		updateText();
-		deltaTimeout = 0.0;
+		text += '\nEK v${MainMenuState.extraKeysVersion}';
+		deltaTimeout += deltaTime;
 	}
 
 	public dynamic function updateText():Void { // so people can override it in hscript
 		text = 'FPS: ${currentFPS}'
-		+ '\nMemory: ${flixel.util.FlxStringUtil.formatBytes(memoryMegas)}';
+		+ '\nMemory: ${flixel.util.FlxStringUtil.formatBytes(memoryMegas)}'+
+		os;
 
 		textColor = 0xFFFFFFFF;
 		if (currentFPS < FlxG.drawFramerate * 0.5)
@@ -70,5 +80,11 @@ class FPSCounter extends TextField
 	}
 
 	inline function get_memoryMegas():Float
-		return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_USAGE);
+		return cast(System.totalMemory, UInt);
+	
+	public inline function positionFPS(X:Float, Y:Float, ?scale:Float = 1){
+		scaleX = scaleY = #if mobile (scale > 1 ? scale : 1) #else (scale < 1 ? scale : 1) #end;
+		x = FlxG.game.x + X;
+		y = FlxG.game.y + Y;
+	}
 }
