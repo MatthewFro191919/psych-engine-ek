@@ -3,7 +3,7 @@ package states.editors.content;
 import backend.Song;
 import backend.Difficulty;
 
-import Section.*;
+import backend.Section.*;
 
 import flixel.math.FlxMath;
 import flixel.util.FlxSort;
